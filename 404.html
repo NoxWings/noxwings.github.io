@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>David (NoxWings) García Miguel</title>
+</head>
+<body>
+<script>
+    var redirectTo = encodeURIComponent(location.pathname);
+    var newUrl = new URL(location.href);
+    newUrl.searchParams.append("redirectTo", redirectTo);
+    newUrl.pathname = "/";
+    location.replace(newUrl.href);
+</script>
+</body>
+</html>
