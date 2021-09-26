@@ -1,0 +1,681 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.9.0">Jekyll</generator><link href="https://noxwings.com/feed.xml" rel="self" type="application/atom+xml" /><link href="https://noxwings.com/" rel="alternate" type="text/html" /><updated>2021-09-26T13:33:04+02:00</updated><id>https://noxwings.com/feed.xml</id><title type="html">NoxWings</title><subtitle>Love rendering vfx and technical art topics</subtitle><author><name>David (NoxWings) García Miguel</name><email>noxwings@gmail.com</email></author><entry><title type="html">Raymarching tutorial 0: Intro to shadertoy</title><link href="https://noxwings.com/blog/posts/2021/09/24/step00-intro.html" rel="alternate" type="text/html" title="Raymarching tutorial 0: Intro to shadertoy" /><published>2021-09-24T12:00:00+02:00</published><updated>2021-09-24T12:00:00+02:00</updated><id>https://noxwings.com/blog/posts/2021/09/24/step00-intro</id><content type="html" xml:base="https://noxwings.com/blog/posts/2021/09/24/step00-intro.html">&lt;p&gt;We will start by getting out feet wet by using &lt;a href=&quot;www.shadertoy.com&quot;&gt;shadertoy&lt;/a&gt;. In this site you can code a pixel/fragment shader that is used to calculate the color of each pixel.
+We are going to start with something simple: drawing a 2D image. Do you remember our goal?&lt;/p&gt;
+
+&lt;p&gt;&lt;img class=&quot;center&quot; width=&quot;600px&quot; src=&quot;/assets/images/raymarching-tutorial/step0/goal.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Take a look at the ground. Do you see the pattern on the floor? those tiling squares? That’s what we are going to be doing today!
+Feel free to skip this part of the tutorial if you are somewhat used to shaders already.&lt;/p&gt;
+
+&lt;p&gt;&lt;i class=&quot;fas fa-warning&quot;&gt;&lt;/i&gt; Disclaimer:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;This is NOT a tutorial on glsl or how to write shaders&lt;/li&gt;
+  &lt;li&gt;I am still assuming some prior knowledge with shaders&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;getting-used-to-the-environment&quot;&gt;Getting used to the environment&lt;/h2&gt;
+
+&lt;p&gt;On shadertoy we have a basic function called &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;mainImage&lt;/code&gt; in which we need to output &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fragColor&lt;/code&gt;. Lets take a look at all the possible inputs we have:&lt;/p&gt;
+
+&lt;p&gt;&lt;img class=&quot;center&quot; src=&quot;/assets/images/raymarching-tutorial/step0/shader-inputs.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;We can actually get some UVs for our texture just by using:&lt;/p&gt;
+
+&lt;div class=&quot;language-glsl highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;mainImage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;out&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec4&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fragColor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fragCoord&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fragCoord&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iResolution&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;xy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fragColor&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;img class=&quot;center&quot; width=&quot;600px&quot; src=&quot;/assets/images/raymarching-tutorial/step0/uvs.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Lets start with a basic template:&lt;/p&gt;
+
+&lt;div class=&quot;language-glsl highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;vec3&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;black&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;vec3&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pink&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// 100% red, 0% green, 100% blue&lt;/span&gt;
+
+&lt;span class=&quot;kt&quot;&gt;vec3&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;getColor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// We will be adding some code here soon&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;black&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;mainImage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;out&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec4&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fragColor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fragCoord&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fragCoord&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iResolution&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;xy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;vec3&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;color&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;getColor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fragColor&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;color&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;hr /&gt;
+
+&lt;h1 id=&quot;painting-the-outlines&quot;&gt;Painting the outlines&lt;/h1&gt;
+
+&lt;p&gt;Now lets try to render a square outline on the edges of the image. The easiest thing to do is just using some conditional to paint these regions in pink.&lt;/p&gt;
+
+&lt;div class=&quot;language-glsl highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;vec3&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;getColor&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;95&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;||&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mo&quot;&gt;05&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;||&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;95&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;||&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mo&quot;&gt;05&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pink&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;black&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;img class=&quot;center&quot; width=&quot;600px&quot; src=&quot;/assets/images/raymarching-tutorial/step0/edges.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;But that is not how we usually code in shaders. We can start introducing a couple changes.
+First of all, having to define &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;0.95&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;0.05&lt;/code&gt; as the boundaries for each side is not ideal.&lt;/p&gt;
+
+&lt;div class=&quot;language-glsl highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;vec3&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;getColor&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;distanceFromCenter&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;abs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;maxDistance&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;max&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;distanceFromCenter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;distanceFromCenter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;maxDistance&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;9&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pink&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;black&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The ouput is exactly the same as before. Take a look at this.&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;uv - 0.5&lt;/code&gt; is shifting the whole uv so that instead of going from &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;[0, 1]&lt;/code&gt; it goes from &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;[-0.5, 0.5]&lt;/code&gt; on the screen.&lt;/li&gt;
+  &lt;li&gt;Then we multiply by 2 so that they go from &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;[-1, 1]&lt;/code&gt;.&lt;/li&gt;
+  &lt;li&gt;Later on by getting the absolute value each uv goes from &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;1&lt;/code&gt; on one side to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;0&lt;/code&gt; on the center and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;1&lt;/code&gt; on the other side.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;This is what the shifted uv looks like:&lt;/p&gt;
+
+&lt;p&gt;&lt;img class=&quot;center&quot; width=&quot;600px&quot; src=&quot;/assets/images/raymarching-tutorial/step0/shifted_uv.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Next refactor: lets change that &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;if&lt;/code&gt; statement. You might have heard branching is &lt;strong&gt;BAD&lt;/strong&gt; like really bad for performance on shaders. Explaining the “why” and “when” of those performance implications is a completely different story maybe for another entire blog series. In a quick way, this used to be a much bigger problem on gpus a lot of years ago. In any case, our particular &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;if&lt;/code&gt; statement is most probably NOT even branching!! The compiler is probably just going to translate our conditional assignment as a &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cmov&lt;/code&gt; instruction. In fact, if we were to use the ternary operator &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;?&lt;/code&gt; it would be guaranteed that it would be a conditional assignment. Then, you may ask… why should we change it?? First of all we could make it shorter and more idiomatic by using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;step&lt;/code&gt; but the actual reason to change it is because we could use &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;smoothstep&lt;/code&gt; and get antialiasing basically for free:&lt;/p&gt;
+
+&lt;div class=&quot;language-glsl highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;vec3&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;getColor&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;borderSize&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;aa&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mo&quot;&gt;05&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;distanceFromCenter&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;abs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;maxDistance&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;max&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;distanceFromCenter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;distanceFromCenter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;border&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;borderSize&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mix&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;black&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pink&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;smoothstep&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;border&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;aa&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;border&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;aa&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;maxDistance&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;img class=&quot;center&quot; width=&quot;600px&quot; src=&quot;/assets/images/raymarching-tutorial/step0/smooth_edges.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;This is exagerated so that you can actually see the smooth transition from pink to black. I may not make much sense right now but it will be important later on.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h1 id=&quot;repeating-the-pattern&quot;&gt;Repeating the pattern&lt;/h1&gt;
+
+&lt;p&gt;Now lets try repeating our pattern multiple times. Since we already have one outline painted we can just take advantage of math to repeat our uvs multiple times before sending them to the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;getColor&lt;/code&gt; function. Lets add a new function called &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;repeatUV&lt;/code&gt;.&lt;/p&gt;
+
+&lt;div class=&quot;language-glsl highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+&lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;repeatUV&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;times&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fract&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;times&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;mainImage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;out&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec4&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fragColor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fragCoord&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fragCoord&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iResolution&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;xy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;repetitions&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;imageUV&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;repeatUV&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;repetitions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;vec3&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;color&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;getColor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;imageUV&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;fragColor&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;color&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Lets visualize what &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;repeatUV&lt;/code&gt; this is doing to our initial uvs:
+&lt;img class=&quot;center&quot; width=&quot;600px&quot; src=&quot;/assets/images/raymarching-tutorial/step0/repeated_uv.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;And magic, we get this image back:
+&lt;img class=&quot;center&quot; width=&quot;600px&quot; src=&quot;/assets/images/raymarching-tutorial/step0/grid.png&quot; /&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h1 id=&quot;making-the-cells-actually-squared&quot;&gt;Making the cells actually squared&lt;/h1&gt;
+
+&lt;p&gt;Currently cells are not squared just because each uv component scales at a different rate because of the screen aspect ratio.
+When we map the texture to the actual geometry we won have this problem but if you want to fix it here you can just multiply the x component by the aspect ratio:&lt;/p&gt;
+
+&lt;div class=&quot;language-glsl highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iResolution&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iResolution&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;So the whole shader ends up looking like this:&lt;/p&gt;
+
+&lt;div class=&quot;language-glsl highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;vec3&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;black&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;vec3&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pink&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+&lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;repeatUV&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;times&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fract&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;times&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;kt&quot;&gt;vec3&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;getColor&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;borderSize&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;aa&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mo&quot;&gt;01&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;distanceFromCenter&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;abs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;maxDistance&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;max&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;distanceFromCenter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;distanceFromCenter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;border&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;borderSize&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mix&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;black&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pink&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;smoothstep&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;border&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;aa&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;border&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;aa&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;maxDistance&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;mainImage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;out&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec4&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fragColor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fragCoord&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fragCoord&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iResolution&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;xy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iResolution&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iResolution&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;repetitions&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;vec2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;imageUV&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;repeatUV&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;uv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;repetitions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;vec3&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;color&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;getColor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;imageUV&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;fragColor&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vec4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;color&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;And this is the output:&lt;/p&gt;
+
+&lt;p&gt;&lt;img class=&quot;center&quot; width=&quot;600px&quot; src=&quot;/assets/images/raymarching-tutorial/step0/grid_squares.png&quot; /&gt;&lt;/p&gt;</content><author><name>David (NoxWings) García Miguel</name><email>noxwings@gmail.com</email></author><category term="blog" /><category term="posts" /><summary type="html">We will start by getting out feet wet by using shadertoy. In this site you can code a pixel/fragment shader that is used to calculate the color of each pixel. We are going to start with something simple: drawing a 2D image. Do you remember our goal? Take a look at the ground. Do you see the pattern on the floor? those tiling squares? That’s what we are going to be doing today! Feel free to skip this part of the tutorial if you are somewhat used to shaders already. Disclaimer: This is NOT a tutorial on glsl or how to write shaders I am still assuming some prior knowledge with shaders Getting used to the environment On shadertoy we have a basic function called mainImage in which we need to output fragColor. Lets take a look at all the possible inputs we have: We can actually get some UVs for our texture just by using: void mainImage( out vec4 fragColor, in vec2 fragCoord ) { vec2 uv = fragCoord / iResolution.xy; fragColor = vec4(uv, 0.0, 1.0); } Lets start with a basic template: vec3 black = vec3(0.0, 0.0, 0.0); vec3 pink = vec3(1.0, 0.0, 1.0); // 100% red, 0% green, 100% blue vec3 getColor( vec2 uv ) { // We will be adding some code here soon return black; } void mainImage( out vec4 fragColor, in vec2 fragCoord ) { vec2 uv = fragCoord / iResolution.xy; vec3 color = getColor(uv); fragColor = vec4(color, 1.0); } Painting the outlines Now lets try to render a square outline on the edges of the image. The easiest thing to do is just using some conditional to paint these regions in pink. vec3 getColor ( vec2 uv ) { if ((uv.x &amp;gt; 0.95 || uv.x &amp;lt; 0.05) || (uv.y &amp;gt; 0.95 || uv.y &amp;lt; 0.05)) { return pink; } else { return black; } } But that is not how we usually code in shaders. We can start introducing a couple changes. First of all, having to define 0.95 and 0.05 as the boundaries for each side is not ideal. vec3 getColor ( vec2 uv ) { vec2 distanceFromCenter = abs((uv - 0.5) * 2.0); float maxDistance = max(distanceFromCenter.x, distanceFromCenter.y); if (maxDistance &amp;gt; 0.9) { return pink; } else { return black; } } The ouput is exactly the same as before. Take a look at this. uv - 0.5 is shifting the whole uv so that instead of going from [0, 1] it goes from [-0.5, 0.5] on the screen. Then we multiply by 2 so that they go from [-1, 1]. Later on by getting the absolute value each uv goes from 1 on one side to 0 on the center and 1 on the other side. This is what the shifted uv looks like: Next refactor: lets change that if statement. You might have heard branching is BAD like really bad for performance on shaders. Explaining the “why” and “when” of those performance implications is a completely different story maybe for another entire blog series. In a quick way, this used to be a much bigger problem on gpus a lot of years ago. In any case, our particular if statement is most probably NOT even branching!! The compiler is probably just going to translate our conditional assignment as a cmov instruction. In fact, if we were to use the ternary operator ? it would be guaranteed that it would be a conditional assignment. Then, you may ask… why should we change it?? First of all we could make it shorter and more idiomatic by using step but the actual reason to change it is because we could use smoothstep and get antialiasing basically for free: vec3 getColor ( vec2 uv ) { float borderSize = 0.1; float aa = 0.05; vec2 distanceFromCenter = abs((uv - 0.5) * 2.0); float maxDistance = max(distanceFromCenter.x, distanceFromCenter.y); float border = 1.0 - borderSize; return mix(black, pink, smoothstep(border - aa, border + aa, maxDistance)); } This is exagerated so that you can actually see the smooth transition from pink to black. I may not make much sense right now but it will be important later on. Repeating the pattern Now lets try repeating our pattern multiple times. Since we already have one outline painted we can just take advantage of math to repeat our uvs multiple times before sending them to the getColor function. Lets add a new function called repeatUV. vec2 repeatUV ( vec2 uv, vec2 times ) { return fract(uv * times); } void mainImage( out vec4 fragColor, in vec2 fragCoord ) { vec2 uv = fragCoord / iResolution.xy; vec2 repetitions = vec2(5.0); vec2 imageUV = repeatUV(uv, repetitions); vec3 color = getColor(imageUV); fragColor = vec4(color, 1.0); } Lets visualize what repeatUV this is doing to our initial uvs: And magic, we get this image back: Making the cells actually squared Currently cells are not squared just because each uv component scales at a different rate because of the screen aspect ratio. When we map the texture to the actual geometry we won have this problem but if you want to fix it here you can just multiply the x component by the aspect ratio: uv.x *= iResolution.x / iResolution.y; So the whole shader ends up looking like this: vec3 black = vec3(0.0, 0.0, 0.0); vec3 pink = vec3(1.0, 0.0, 1.0); vec2 repeatUV ( vec2 uv, vec2 times ) { return fract(uv * times); } vec3 getColor ( vec2 uv ) { float borderSize = 0.1; float aa = 0.01; vec2 distanceFromCenter = abs((uv - 0.5) * 2.0); float maxDistance = max(distanceFromCenter.x, distanceFromCenter.y); float border = 1.0 - borderSize; return mix(black, pink, smoothstep(border - aa, border + aa, maxDistance)); } void mainImage( out vec4 fragColor, in vec2 fragCoord ) { vec2 uv = fragCoord / iResolution.xy; uv.x *= iResolution.x / iResolution.y; vec2 repetitions = vec2(5.0); vec2 imageUV = repeatUV(uv, repetitions); vec3 color = getColor(imageUV); fragColor = vec4(color, 1.0); } And this is the output:</summary></entry><entry><title type="html">Raymarching tutorial series</title><link href="https://noxwings.com/blog/posts/2021/09/23/head.html" rel="alternate" type="text/html" title="Raymarching tutorial series" /><published>2021-09-23T12:00:00+02:00</published><updated>2021-09-23T12:00:00+02:00</updated><id>https://noxwings.com/blog/posts/2021/09/23/head</id><content type="html" xml:base="https://noxwings.com/blog/posts/2021/09/23/head.html">&lt;p&gt;Hello and welcome to the raymarching tutorial!&lt;/p&gt;
+
+&lt;p&gt;Raymarching is an awesome technique to create beautiful art in pixel shaders but the techniques involved are also really useful to understand other vfx such as volumetric effects.&lt;/p&gt;
+
+&lt;p&gt;In this series we will learn from the ground up how to create 3d scene with raymarching and we will also review some of the basic concepts of shading.
+By the end of this tutorial series we will learn how to create this whole scene:&lt;/p&gt;
+
+&lt;div class=&quot;iframe-wrapper&quot;&gt;
+    &lt;iframe frameborder=&quot;0&quot; src=&quot;https://www.shadertoy.com/embed/3tlBRn?gui=false&amp;amp;paused=false&amp;amp;muted=false&quot; allowfullscreen=&quot;&quot;&gt;&lt;/iframe&gt;
+&lt;/div&gt;
+
+&lt;p&gt;There will be many steps involved so I will split them into separated tutorials:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;/blog/posts/2021/09/24/step00-intro.html&quot;&gt;Step 0: Introduction to Shadertoy&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;</content><author><name>David (NoxWings) García Miguel</name><email>noxwings@gmail.com</email></author><category term="blog" /><category term="posts" /><summary type="html">Hello and welcome to the raymarching tutorial! Raymarching is an awesome technique to create beautiful art in pixel shaders but the techniques involved are also really useful to understand other vfx such as volumetric effects. In this series we will learn from the ground up how to create 3d scene with raymarching and we will also review some of the basic concepts of shading. By the end of this tutorial series we will learn how to create this whole scene: There will be many steps involved so I will split them into separated tutorials: Step 0: Introduction to Shadertoy</summary></entry><entry><title type="html">Retro-Vibes</title><link href="https://noxwings.com/projects/retro-vibes/" rel="alternate" type="text/html" title="Retro-Vibes" /><published>2020-07-27T12:00:00+02:00</published><updated>2020-07-27T12:00:00+02:00</updated><id>https://noxwings.com/projects/retro-vibes</id><content type="html" xml:base="https://noxwings.com/projects/retro-vibes/">&lt;p&gt;Retro-Vibes is a 21K Linux x64 intro. This is my very first demoscene production.&lt;/p&gt;
+
+&lt;p&gt;You can download the executable here: &lt;a href=&quot;https://github.com/NoxWings/retro-vibes-executable&quot;&gt;&lt;i class=&quot;fas fa-download fa-lg&quot;&gt;&lt;/i&gt; Download&lt;/a&gt;, &lt;a href=&quot;https://www.pouet.net/prod.php?which=86467&quot;&gt;Pouet Link&lt;/a&gt;&lt;/p&gt;
+
+&lt;div class=&quot;iframe-wrapper&quot;&gt;
+    &lt;div class=&quot;hytPlayerWrapOuter&quot;&gt;
+        &lt;div class=&quot;hytPlayerWrap&quot;&gt;
+            &lt;iframe src=&quot;https://www.youtube.com/embed/InBqpHpKvpY?rel=0&amp;amp;enablejsapi=1&quot; frameborder=&quot;0&quot; allow=&quot;accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture&quot; allowfullscreen=&quot;&quot;&gt;
+            &lt;/iframe&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;!-- https://maxl.us/hide-related --&gt;
+&lt;style&gt;
+    .hytPlayerWrap::after {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+
+    .hytPlayerWrap.ended::after {
+        content: &quot;&quot;;
+        cursor: pointer;
+        background-color: black;
+        background-size: 64px 64px;
+        background-image: url(data:image/svg+xml;utf8;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiB2aWV3Qm94PSIwIDAgNTEwIDUxMCI+PHBhdGggZD0iTTI1NSAxMDJWMEwxMjcuNSAxMjcuNSAyNTUgMjU1VjE1M2M4NC4xNSAwIDE1MyA2OC44NSAxNTMgMTUzcy02OC44NSAxNTMtMTUzIDE1My0xNTMtNjguODUtMTUzLTE1M0g1MWMwIDExMi4yIDkxLjggMjA0IDIwNCAyMDRzMjA0LTkxLjggMjA0LTIwNC05MS44LTIwNC0yMDQtMjA0eiIgZmlsbD0iI0ZGRiIvPjwvc3ZnPg==)
+    }
+&lt;/style&gt;
+
+&lt;script&gt;
+    &quot;use strict&quot;;
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.hideYTActivated) return;
+        if (typeof YT === 'undefined') {
+            let tag = document.createElement('script');
+            tag.src = &quot;https://www.youtube.com/iframe_api&quot;;
+            let firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        }
+        let onYouTubeIframeAPIReadyCallbacks = [];
+        for (let playerWrap of document.querySelectorAll(&quot;.hytPlayerWrap&quot;)) {
+            let playerFrame = playerWrap.querySelector(&quot;iframe&quot;);
+            let onPlayerStateChange = function (event) {
+                if (event.data == YT.PlayerState.ENDED) {
+                    playerWrap.classList.add(&quot;ended&quot;);
+                } else if (event.data == YT.PlayerState.PAUSED) {
+                    playerWrap.classList.remove(&quot;ended&quot;);
+                } else if (event.data == YT.PlayerState.PLAYING) {
+                    playerWrap.classList.remove(&quot;ended&quot;);
+                }
+            };
+            let player;
+            onYouTubeIframeAPIReadyCallbacks.push(function () {
+                player = new YT.Player(playerFrame, {
+                    events: { 'onStateChange': onPlayerStateChange }
+                });
+            });
+            playerWrap.addEventListener(&quot;click&quot;, function () {
+                let playerState = player.getPlayerState();
+                if (playerState == YT.PlayerState.ENDED) {
+                    player.seekTo(0);
+                }
+            });
+        }
+        window.onYouTubeIframeAPIReady = function () {
+            for (let callback of onYouTubeIframeAPIReadyCallbacks) {
+                callback();
+            }
+        };
+        window.hideYTActivated = true;
+    });
+&lt;/script&gt;
+
+&lt;!--more--&gt;
+
+&lt;h2 id=&quot;how-is-it-done--how-it-works&quot;&gt;How is it done / How it works&lt;/h2&gt;
+
+&lt;h3 id=&quot;graphics&quot;&gt;&lt;strong&gt;Graphics&lt;/strong&gt;&lt;/h3&gt;
+
+&lt;p&gt;It is using OpenGL 3.3 and I’ve used some custom tools to develop it but they are pretty simple using imgui. Also I made a small separate project I called &lt;strong&gt;stringifile&lt;/strong&gt; to process shaders so that I could hot reload them to iterate faster.&lt;/p&gt;
+
+&lt;p&gt;&lt;img class=&quot;center&quot; src=&quot;/assets/images/retro-vibes/tools.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img class=&quot;center&quot; src=&quot;/assets/images/retro-vibes/shaders-reload.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;In order to create the window I used SDL. This is one of the few external resource exceptions usually allowed on Linux in order to make productions compatible with GTK, Qt, X11 or Wayland.&lt;/p&gt;
+
+&lt;p&gt;Everything is modeled and animated using raymarching &amp;amp; &lt;strong&gt;SDF&lt;/strong&gt;s (Signed Distance Fields) which is pretty common on the demoscene. Since this was my first sizecoding experience I settled on just making finished production, so materials are usually pretty basic with just simple lighting and shading. Also there is just a little bit of post processing which could be setup using a simple DAG (directed acyclic graph) on the code. The only effects I used were Barrel / TV distortion, ScanLines, a little bit of Vignette &amp;amp; simple Chromatic aberration.&lt;/p&gt;
+
+&lt;p&gt;&lt;img class=&quot;center&quot; src=&quot;/assets/images/retro-vibes/dag.png&quot; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;sound&quot;&gt;&lt;strong&gt;Sound&lt;/strong&gt;&lt;/h3&gt;
+
+&lt;p&gt;Actually I wanted to use something that was done already so that I could focus on the graphics a bit more. Unfortunatelly the only option I found was Tunefish which has a GPL license and I was not ready to show this code mesh xD.&lt;/p&gt;
+
+&lt;p&gt;About the synthesizer it is pretty simple:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Everything is realtime, nothing is baked&lt;/li&gt;
+  &lt;li&gt;It has the usual oscillators (sine, triangle, square, saw and random noise)&lt;/li&gt;
+  &lt;li&gt;I also implemented a simple ADSR envelope.&lt;/li&gt;
+  &lt;li&gt;Added some biquad filters mainly for low pass filtering&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;As a DAW(Digital Audio Workstation) I’ve used LMMS:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;I modeled instruments using the “triple oscillator” which then I manually reproduced in code.&lt;/li&gt;
+  &lt;li&gt;I also created the actual song in there&lt;/li&gt;
+  &lt;li&gt;Made a small utility to get the midi out of the LMMS project file and into the executable.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;div class=&quot;center&quot;&gt;
+&lt;img src=&quot;/assets/images/retro-vibes/lmms-instruments.png&quot; /&gt;
+&lt;img src=&quot;/assets/images/retro-vibes/song-composition.png&quot; /&gt;
+&lt;/div&gt;
+
+&lt;h4 id=&quot;compression&quot;&gt;Compression&lt;/h4&gt;
+
+&lt;p&gt;I am just using a shell drop: a shell script which decompressed the rests of the file and starts the actual binary execution.
+I decided to use &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;lzcat&lt;/code&gt; or &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;xz&lt;/code&gt; as it gave nice compression ratio, it was pretty fast and it was available by default (&lt;a href=&quot;http://releases.ubuntu.com/focal/ubuntu-20.04-desktop-amd64.manifest##:~:text=xz-utils&quot;&gt;package&lt;/a&gt; | &lt;a href=&quot;https://packages.ubuntu.com/focal/amd64/xz-utils/filelist&quot;&gt;files&lt;/a&gt; | &lt;a href=&quot;http://manpages.ubuntu.com/manpages/focal/man1/xz.1.html&quot;&gt;lzcat&lt;/a&gt;)&lt;/p&gt;</content><author><name>David (NoxWings) García Miguel</name><email>noxwings@gmail.com</email></author><category term="projects" /><summary type="html">Retro-Vibes is a 21K Linux x64 intro. This is my very first demoscene production. You can download the executable here: Download, Pouet Link</summary></entry><entry><title type="html">Web Toy Renderer</title><link href="https://noxwings.com/projects/wtr/" rel="alternate" type="text/html" title="Web Toy Renderer" /><published>2020-06-18T12:00:00+02:00</published><updated>2020-06-18T12:00:00+02:00</updated><id>https://noxwings.com/projects/wtr</id><content type="html" xml:base="https://noxwings.com/projects/wtr/">&lt;div class=&quot;iframe-wrapper&quot;&gt;
+    &lt;div class=&quot;hytPlayerWrapOuter&quot;&gt;
+        &lt;div class=&quot;hytPlayerWrap&quot;&gt;
+            &lt;iframe src=&quot;https://www.youtube.com/embed/TP1I1fJGsVY?rel=0&amp;amp;enablejsapi=1&quot; frameborder=&quot;0&quot; allow=&quot;accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture&quot; allowfullscreen=&quot;&quot;&gt;
+            &lt;/iframe&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;!-- https://maxl.us/hide-related --&gt;
+&lt;style&gt;
+    .hytPlayerWrap::after {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+
+    .hytPlayerWrap.ended::after {
+        content: &quot;&quot;;
+        cursor: pointer;
+        background-color: black;
+        background-size: 64px 64px;
+        background-image: url(data:image/svg+xml;utf8;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiB2aWV3Qm94PSIwIDAgNTEwIDUxMCI+PHBhdGggZD0iTTI1NSAxMDJWMEwxMjcuNSAxMjcuNSAyNTUgMjU1VjE1M2M4NC4xNSAwIDE1MyA2OC44NSAxNTMgMTUzcy02OC44NSAxNTMtMTUzIDE1My0xNTMtNjguODUtMTUzLTE1M0g1MWMwIDExMi4yIDkxLjggMjA0IDIwNCAyMDRzMjA0LTkxLjggMjA0LTIwNC05MS44LTIwNC0yMDQtMjA0eiIgZmlsbD0iI0ZGRiIvPjwvc3ZnPg==)
+    }
+&lt;/style&gt;
+
+&lt;script&gt;
+    &quot;use strict&quot;;
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.hideYTActivated) return;
+        if (typeof YT === 'undefined') {
+            let tag = document.createElement('script');
+            tag.src = &quot;https://www.youtube.com/iframe_api&quot;;
+            let firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        }
+        let onYouTubeIframeAPIReadyCallbacks = [];
+        for (let playerWrap of document.querySelectorAll(&quot;.hytPlayerWrap&quot;)) {
+            let playerFrame = playerWrap.querySelector(&quot;iframe&quot;);
+            let onPlayerStateChange = function (event) {
+                if (event.data == YT.PlayerState.ENDED) {
+                    playerWrap.classList.add(&quot;ended&quot;);
+                } else if (event.data == YT.PlayerState.PAUSED) {
+                    playerWrap.classList.remove(&quot;ended&quot;);
+                } else if (event.data == YT.PlayerState.PLAYING) {
+                    playerWrap.classList.remove(&quot;ended&quot;);
+                }
+            };
+            let player;
+            onYouTubeIframeAPIReadyCallbacks.push(function () {
+                player = new YT.Player(playerFrame, {
+                    events: { 'onStateChange': onPlayerStateChange }
+                });
+            });
+            playerWrap.addEventListener(&quot;click&quot;, function () {
+                let playerState = player.getPlayerState();
+                if (playerState == YT.PlayerState.ENDED) {
+                    player.seekTo(0);
+                }
+            });
+        }
+        window.onYouTubeIframeAPIReady = function () {
+            for (let callback of onYouTubeIframeAPIReadyCallbacks) {
+                callback();
+            }
+        };
+        window.hideYTActivated = true;
+    });
+&lt;/script&gt;
+
+&lt;p&gt;I made a simple Webgl Toy Renderer mainly to try a couple things:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;loading gltf files&lt;/li&gt;
+  &lt;li&gt;implementing normal mapping using derivatives to compute tangents&lt;/li&gt;
+  &lt;li&gt;implementing shadow mapping&lt;/li&gt;
+&lt;/ul&gt;</content><author><name>David (NoxWings) García Miguel</name><email>noxwings@gmail.com</email></author><category term="projects" /><summary type="html">I made a simple Webgl Toy Renderer mainly to try a couple things: loading gltf files implementing normal mapping using derivatives to compute tangents implementing shadow mapping</summary></entry><entry><title type="html">Nightfall</title><link href="https://noxwings.com/projects/nightfall/" rel="alternate" type="text/html" title="Nightfall" /><published>2019-12-26T11:00:00+01:00</published><updated>2019-12-26T11:00:00+01:00</updated><id>https://noxwings.com/projects/nightfall</id><content type="html" xml:base="https://noxwings.com/projects/nightfall/">&lt;div class=&quot;iframe-wrapper&quot;&gt;
+    &lt;iframe frameborder=&quot;0&quot; src=&quot;https://noxwings.github.io/nightfall&quot; allowfullscreen=&quot;&quot;&gt;&lt;/iframe&gt;
+&lt;/div&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://noxwings.github.io/nightfall&quot;&gt;&lt;i class=&quot;fas fa-expand fa-lg&quot;&gt;&lt;/i&gt; Full Screen&lt;/a&gt; |
+&lt;a href=&quot;https://github.com/NoxWings/nightfall&quot;&gt;&lt;i class=&quot;fab fa-github fa-lg&quot;&gt;&lt;/i&gt; Github repo&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Just a relaxing interactive background. In the middle of the ocean with some shooting stars falling around.&lt;/p&gt;
+
+&lt;p&gt;I made this using babylonjs, just to give it a try.&lt;/p&gt;</content><author><name>David (NoxWings) García Miguel</name><email>noxwings@gmail.com</email></author><category term="projects" /><summary type="html">Full Screen | Github repo Just a relaxing interactive background. In the middle of the ocean with some shooting stars falling around. I made this using babylonjs, just to give it a try.</summary></entry><entry><title type="html">Stroke recognition</title><link href="https://noxwings.com/projects/stroke-recognition/" rel="alternate" type="text/html" title="Stroke recognition" /><published>2019-03-05T11:00:00+01:00</published><updated>2019-03-05T11:00:00+01:00</updated><id>https://noxwings.com/projects/stroke-recognition</id><content type="html" xml:base="https://noxwings.com/projects/stroke-recognition/">&lt;div class=&quot;iframe-wrapper&quot;&gt;
+    &lt;div class=&quot;hytPlayerWrapOuter&quot;&gt;
+        &lt;div class=&quot;hytPlayerWrap&quot;&gt;
+            &lt;iframe src=&quot;https://www.youtube.com/embed/f0uKMcjFDX4?rel=0&amp;amp;enablejsapi=1&quot; frameborder=&quot;0&quot; allow=&quot;accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture&quot; allowfullscreen=&quot;&quot;&gt;
+            &lt;/iframe&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;!-- https://maxl.us/hide-related --&gt;
+&lt;style&gt;
+    .hytPlayerWrap::after {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+
+    .hytPlayerWrap.ended::after {
+        content: &quot;&quot;;
+        cursor: pointer;
+        background-color: black;
+        background-size: 64px 64px;
+        background-image: url(data:image/svg+xml;utf8;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiB2aWV3Qm94PSIwIDAgNTEwIDUxMCI+PHBhdGggZD0iTTI1NSAxMDJWMEwxMjcuNSAxMjcuNSAyNTUgMjU1VjE1M2M4NC4xNSAwIDE1MyA2OC44NSAxNTMgMTUzcy02OC44NSAxNTMtMTUzIDE1My0xNTMtNjguODUtMTUzLTE1M0g1MWMwIDExMi4yIDkxLjggMjA0IDIwNCAyMDRzMjA0LTkxLjggMjA0LTIwNC05MS44LTIwNC0yMDQtMjA0eiIgZmlsbD0iI0ZGRiIvPjwvc3ZnPg==)
+    }
+&lt;/style&gt;
+
+&lt;script&gt;
+    &quot;use strict&quot;;
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.hideYTActivated) return;
+        if (typeof YT === 'undefined') {
+            let tag = document.createElement('script');
+            tag.src = &quot;https://www.youtube.com/iframe_api&quot;;
+            let firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        }
+        let onYouTubeIframeAPIReadyCallbacks = [];
+        for (let playerWrap of document.querySelectorAll(&quot;.hytPlayerWrap&quot;)) {
+            let playerFrame = playerWrap.querySelector(&quot;iframe&quot;);
+            let onPlayerStateChange = function (event) {
+                if (event.data == YT.PlayerState.ENDED) {
+                    playerWrap.classList.add(&quot;ended&quot;);
+                } else if (event.data == YT.PlayerState.PAUSED) {
+                    playerWrap.classList.remove(&quot;ended&quot;);
+                } else if (event.data == YT.PlayerState.PLAYING) {
+                    playerWrap.classList.remove(&quot;ended&quot;);
+                }
+            };
+            let player;
+            onYouTubeIframeAPIReadyCallbacks.push(function () {
+                player = new YT.Player(playerFrame, {
+                    events: { 'onStateChange': onPlayerStateChange }
+                });
+            });
+            playerWrap.addEventListener(&quot;click&quot;, function () {
+                let playerState = player.getPlayerState();
+                if (playerState == YT.PlayerState.ENDED) {
+                    player.seekTo(0);
+                }
+            });
+        }
+        window.onYouTubeIframeAPIReady = function () {
+            for (let callback of onYouTubeIframeAPIReadyCallbacks) {
+                callback();
+            }
+        };
+        window.hideYTActivated = true;
+    });
+&lt;/script&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://noxwings.github.io/Stroke-Recognition/&quot;&gt;&lt;i class=&quot;fas fa-expand fa-lg&quot;&gt;&lt;/i&gt; Live Demo&lt;/a&gt; |
+&lt;a href=&quot;https://github.com/noxwings/stroke-recognition&quot;&gt;&lt;i class=&quot;fab fa-github fa-lg&quot;&gt;&lt;/i&gt; Github repo&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Recently I did this little stroke recognition experiment. At some point I’ll probably use it in a game.&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Draw strokes and add them with the + button&lt;/li&gt;
+  &lt;li&gt;Draw a new Stoke and will be matched against the samples (marked red on the top row)&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The actual recognition matcher is actually pretty simple. The only prerequisite is that if had to be size invariant, that is, tt should not take into account the scale. I ended up with a pretty simple approach. I normalize both strokes to compare them and just check the dot products of each segments. That is exactly the same as if we were checking their polar coordinates.&lt;/p&gt;
+
+&lt;p&gt;In this way we always need to draw the shape using the same starting and ending point. I actually wanted this behaviour but if you want to make it just detect the final shape regarless of the starting and end points you could use something like &lt;a href=&quot;https://en.wikipedia.org/wiki/Cross-correlation&quot;&gt;cross correlation&lt;/a&gt;.&lt;/p&gt;</content><author><name>David (NoxWings) García Miguel</name><email>noxwings@gmail.com</email></author><category term="projects" /><summary type="html">Live Demo | Github repo Recently I did this little stroke recognition experiment. At some point I’ll probably use it in a game. Draw strokes and add them with the + button Draw a new Stoke and will be matched against the samples (marked red on the top row) The actual recognition matcher is actually pretty simple. The only prerequisite is that if had to be size invariant, that is, tt should not take into account the scale. I ended up with a pretty simple approach. I normalize both strokes to compare them and just check the dot products of each segments. That is exactly the same as if we were checking their polar coordinates. In this way we always need to draw the shape using the same starting and ending point. I actually wanted this behaviour but if you want to make it just detect the final shape regarless of the starting and end points you could use something like cross correlation.</summary></entry><entry><title type="html">DnDice</title><link href="https://noxwings.com/projects/dndice/" rel="alternate" type="text/html" title="DnDice" /><published>2018-10-20T12:00:00+02:00</published><updated>2018-10-20T12:00:00+02:00</updated><id>https://noxwings.com/projects/dndice</id><content type="html" xml:base="https://noxwings.com/projects/dndice/">&lt;p&gt;&lt;a href=&quot;https://noxwings.github.io/DnDice&quot; alt=&quot;DnDice&quot;&gt;
+&lt;img class=&quot;center&quot; src=&quot;/assets/images/dndice.png&quot; /&gt;
+&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://noxwings.github.io/DnDice&quot;&gt;&lt;i class=&quot;fas fa-expand fa-lg&quot;&gt;&lt;/i&gt; Live Demo&lt;/a&gt; |
+&lt;a href=&quot;https://github.com/NoxWings/DnDice&quot;&gt;&lt;i class=&quot;fab fa-github fa-lg&quot;&gt;&lt;/i&gt; Github repo&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;This project is &lt;strong&gt;D&lt;/strong&gt;ungeons a&lt;strong&gt;n&lt;/strong&gt;d &lt;strong&gt;D&lt;/strong&gt;ragons &lt;strong&gt;dice&lt;/strong&gt; probability distribution visualizer.
+It uses &lt;a href=&quot;https://en.wikipedia.org/wiki/Dice_notation&quot;&gt;dice notation&lt;/a&gt; and has a small parser to check the expressions.&lt;/p&gt;
+
+&lt;p&gt;All the probabilities are &lt;strong&gt;calculated analytically&lt;/strong&gt;, not by rolling dice on a monte carlo approach.&lt;/p&gt;
+
+&lt;p&gt;Try adding &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;3d6&lt;/code&gt; (roll 3 dices of 6 faces)
+or &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;3(1d4 + 1)&lt;/code&gt;&lt;/p&gt;</content><author><name>David (NoxWings) García Miguel</name><email>noxwings@gmail.com</email></author><category term="projects" /><summary type="html">Live Demo | Github repo This project is Dungeons and Dragons dice probability distribution visualizer. It uses dice notation and has a small parser to check the expressions. All the probabilities are calculated analytically, not by rolling dice on a monte carlo approach. Try adding 3d6 (roll 3 dices of 6 faces) or 3(1d4 + 1)</summary></entry><entry><title type="html">Dissolve shader</title><link href="https://noxwings.com/projects/dissolve-shader/" rel="alternate" type="text/html" title="Dissolve shader" /><published>2017-10-17T12:00:00+02:00</published><updated>2017-10-17T12:00:00+02:00</updated><id>https://noxwings.com/projects/dissolve-shader</id><content type="html" xml:base="https://noxwings.com/projects/dissolve-shader/">&lt;p&gt;&lt;a href=&quot;https://github.com/NoxWings/Shader-Effects&quot;&gt;&lt;i class=&quot;fab fa-github fa-lg&quot;&gt;&lt;/i&gt; Github repo&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;I’ve implemented it with CG inside Unity3D Engine. This is a surface shader.&lt;/p&gt;
+
+&lt;div class=&quot;iframe-wrapper&quot;&gt;
+    &lt;div class=&quot;hytPlayerWrapOuter&quot;&gt;
+        &lt;div class=&quot;hytPlayerWrap&quot;&gt;
+            &lt;iframe src=&quot;https://www.youtube.com/embed/4lQflueOd9g?rel=0&amp;amp;enablejsapi=1&quot; frameborder=&quot;0&quot; allow=&quot;accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture&quot; allowfullscreen=&quot;&quot;&gt;
+            &lt;/iframe&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;!-- https://maxl.us/hide-related --&gt;
+&lt;style&gt;
+    .hytPlayerWrap::after {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+
+    .hytPlayerWrap.ended::after {
+        content: &quot;&quot;;
+        cursor: pointer;
+        background-color: black;
+        background-size: 64px 64px;
+        background-image: url(data:image/svg+xml;utf8;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiB2aWV3Qm94PSIwIDAgNTEwIDUxMCI+PHBhdGggZD0iTTI1NSAxMDJWMEwxMjcuNSAxMjcuNSAyNTUgMjU1VjE1M2M4NC4xNSAwIDE1MyA2OC44NSAxNTMgMTUzcy02OC44NSAxNTMtMTUzIDE1My0xNTMtNjguODUtMTUzLTE1M0g1MWMwIDExMi4yIDkxLjggMjA0IDIwNCAyMDRzMjA0LTkxLjggMjA0LTIwNC05MS44LTIwNC0yMDQtMjA0eiIgZmlsbD0iI0ZGRiIvPjwvc3ZnPg==)
+    }
+&lt;/style&gt;
+
+&lt;script&gt;
+    &quot;use strict&quot;;
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.hideYTActivated) return;
+        if (typeof YT === 'undefined') {
+            let tag = document.createElement('script');
+            tag.src = &quot;https://www.youtube.com/iframe_api&quot;;
+            let firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        }
+        let onYouTubeIframeAPIReadyCallbacks = [];
+        for (let playerWrap of document.querySelectorAll(&quot;.hytPlayerWrap&quot;)) {
+            let playerFrame = playerWrap.querySelector(&quot;iframe&quot;);
+            let onPlayerStateChange = function (event) {
+                if (event.data == YT.PlayerState.ENDED) {
+                    playerWrap.classList.add(&quot;ended&quot;);
+                } else if (event.data == YT.PlayerState.PAUSED) {
+                    playerWrap.classList.remove(&quot;ended&quot;);
+                } else if (event.data == YT.PlayerState.PLAYING) {
+                    playerWrap.classList.remove(&quot;ended&quot;);
+                }
+            };
+            let player;
+            onYouTubeIframeAPIReadyCallbacks.push(function () {
+                player = new YT.Player(playerFrame, {
+                    events: { 'onStateChange': onPlayerStateChange }
+                });
+            });
+            playerWrap.addEventListener(&quot;click&quot;, function () {
+                let playerState = player.getPlayerState();
+                if (playerState == YT.PlayerState.ENDED) {
+                    player.seekTo(0);
+                }
+            });
+        }
+        window.onYouTubeIframeAPIReady = function () {
+            for (let callback of onYouTubeIframeAPIReadyCallbacks) {
+                callback();
+            }
+        };
+        window.hideYTActivated = true;
+    });
+&lt;/script&gt;
+
+&lt;!--more--&gt;
+
+&lt;p&gt;You have to plug it (apart from standard pbr inputs):&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;A grayscale noise image&lt;/li&gt;
+  &lt;li&gt;Edge border width in gray-scale percentage&lt;/li&gt;
+  &lt;li&gt;A tint color for the border dissolution&lt;/li&gt;
+  &lt;li&gt;The emission intensity the border emits&lt;/li&gt;
+  &lt;li&gt;The dissolved property which is animated with a script in this example, representing the % of the animation completed.&lt;/li&gt;
+&lt;/ul&gt;</content><author><name>David (NoxWings) García Miguel</name><email>noxwings@gmail.com</email></author><category term="projects" /><summary type="html">Github repo I’ve implemented it with CG inside Unity3D Engine. This is a surface shader.</summary></entry><entry><title type="html">Cable component</title><link href="https://noxwings.com/projects/cable-component/" rel="alternate" type="text/html" title="Cable component" /><published>2016-11-06T11:00:00+01:00</published><updated>2016-11-06T11:00:00+01:00</updated><id>https://noxwings.com/projects/cable-component</id><content type="html" xml:base="https://noxwings.com/projects/cable-component/">&lt;p&gt;Unity cable component implementation similar to the Unreal Engine one based on verlet integration.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://github.com/NoxWings/Cable-Component&quot;&gt;&lt;i class=&quot;fab fa-github fa-lg&quot;&gt;&lt;/i&gt; Github repo&lt;/a&gt;&lt;/p&gt;
+
+&lt;div class=&quot;iframe-wrapper&quot;&gt;
+    &lt;div class=&quot;hytPlayerWrapOuter&quot;&gt;
+        &lt;div class=&quot;hytPlayerWrap&quot;&gt;
+            &lt;iframe src=&quot;https://www.youtube.com/embed/VN21ROvrF2k?rel=0&amp;amp;enablejsapi=1&quot; frameborder=&quot;0&quot; allow=&quot;accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture&quot; allowfullscreen=&quot;&quot;&gt;
+            &lt;/iframe&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;!-- https://maxl.us/hide-related --&gt;
+&lt;style&gt;
+    .hytPlayerWrap::after {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+
+    .hytPlayerWrap.ended::after {
+        content: &quot;&quot;;
+        cursor: pointer;
+        background-color: black;
+        background-size: 64px 64px;
+        background-image: url(data:image/svg+xml;utf8;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiB2aWV3Qm94PSIwIDAgNTEwIDUxMCI+PHBhdGggZD0iTTI1NSAxMDJWMEwxMjcuNSAxMjcuNSAyNTUgMjU1VjE1M2M4NC4xNSAwIDE1MyA2OC44NSAxNTMgMTUzcy02OC44NSAxNTMtMTUzIDE1My0xNTMtNjguODUtMTUzLTE1M0g1MWMwIDExMi4yIDkxLjggMjA0IDIwNCAyMDRzMjA0LTkxLjggMjA0LTIwNC05MS44LTIwNC0yMDQtMjA0eiIgZmlsbD0iI0ZGRiIvPjwvc3ZnPg==)
+    }
+&lt;/style&gt;
+
+&lt;script&gt;
+    &quot;use strict&quot;;
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.hideYTActivated) return;
+        if (typeof YT === 'undefined') {
+            let tag = document.createElement('script');
+            tag.src = &quot;https://www.youtube.com/iframe_api&quot;;
+            let firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        }
+        let onYouTubeIframeAPIReadyCallbacks = [];
+        for (let playerWrap of document.querySelectorAll(&quot;.hytPlayerWrap&quot;)) {
+            let playerFrame = playerWrap.querySelector(&quot;iframe&quot;);
+            let onPlayerStateChange = function (event) {
+                if (event.data == YT.PlayerState.ENDED) {
+                    playerWrap.classList.add(&quot;ended&quot;);
+                } else if (event.data == YT.PlayerState.PAUSED) {
+                    playerWrap.classList.remove(&quot;ended&quot;);
+                } else if (event.data == YT.PlayerState.PLAYING) {
+                    playerWrap.classList.remove(&quot;ended&quot;);
+                }
+            };
+            let player;
+            onYouTubeIframeAPIReadyCallbacks.push(function () {
+                player = new YT.Player(playerFrame, {
+                    events: { 'onStateChange': onPlayerStateChange }
+                });
+            });
+            playerWrap.addEventListener(&quot;click&quot;, function () {
+                let playerState = player.getPlayerState();
+                if (playerState == YT.PlayerState.ENDED) {
+                    player.seekTo(0);
+                }
+            });
+        }
+        window.onYouTubeIframeAPIReady = function () {
+            for (let callback of onYouTubeIframeAPIReadyCallbacks) {
+                callback();
+            }
+        };
+        window.hideYTActivated = true;
+    });
+&lt;/script&gt;
+
+&lt;p&gt;This project is a simple and optimized implementation of cable physics in Unity3D, it uses &lt;a href=&quot;https://en.wikipedia.org/wiki/Verlet_integration&quot;&gt;verlet integration&lt;/a&gt; to achieve the physics simulation just like &lt;a href=&quot;https://www.unrealengine.com/blog/cable-component-plugin-for-ue4&quot;&gt;UE4 approach&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;The rendering part still has some work to be done as it is currently using a simple line renderer. Ideally it should use a procedural cable generation approach but it wasn’t main the purpouse of this little experiment.&lt;/p&gt;</content><author><name>David (NoxWings) García Miguel</name><email>noxwings@gmail.com</email></author><category term="projects" /><summary type="html">Unity cable component implementation similar to the Unreal Engine one based on verlet integration. Github repo This project is a simple and optimized implementation of cable physics in Unity3D, it uses verlet integration to achieve the physics simulation just like UE4 approach. The rendering part still has some work to be done as it is currently using a simple line renderer. Ideally it should use a procedural cable generation approach but it wasn’t main the purpouse of this little experiment.</summary></entry><entry><title type="html">Leap motion mouse</title><link href="https://noxwings.com/projects/leap-motion-mouse/" rel="alternate" type="text/html" title="Leap motion mouse" /><published>2016-06-03T12:00:00+02:00</published><updated>2016-06-03T12:00:00+02:00</updated><id>https://noxwings.com/projects/leap-motion-mouse</id><content type="html" xml:base="https://noxwings.com/projects/leap-motion-mouse/">&lt;p&gt;&lt;a href=&quot;https://github.com/NoxWings/LeapTouchscreen&quot;&gt;&lt;i class=&quot;fab fa-github fa-lg&quot;&gt;&lt;/i&gt; Github repo&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;This is a small project I made in python that uses leap motion device to convert you screen into a touch screen.&lt;/p&gt;
+
+&lt;!--more--&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Place your leap motion device under your monitor.&lt;/li&gt;
+  &lt;li&gt;You will need to calibrate it by setting each 4 corners of your screen &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;tl, tr, bl, br&lt;/code&gt;. That will calculate the transform to be used.&lt;/li&gt;
+  &lt;li&gt;After the calibration is done you should be able to use your index finger as a pointing device.&lt;/li&gt;
+&lt;/ol&gt;</content><author><name>David (NoxWings) García Miguel</name><email>noxwings@gmail.com</email></author><category term="projects" /><summary type="html">Github repo This is a small project I made in python that uses leap motion device to convert you screen into a touch screen.</summary></entry></feed>

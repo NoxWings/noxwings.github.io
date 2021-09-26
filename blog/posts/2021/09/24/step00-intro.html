@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>Raymarching tutorial 0: Intro to shadertoy | NoxWings</title>
+<meta name="generator" content="Jekyll v3.9.0" />
+<meta property="og:title" content="Raymarching tutorial 0: Intro to shadertoy" />
+<meta name="author" content="David (NoxWings) García Miguel" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="We will start by getting out feet wet by using shadertoy. In this site you can code a pixel/fragment shader that is used to calculate the color of each pixel. We are going to start with something simple: drawing a 2D image. Do you remember our goal? Take a look at the ground. Do you see the pattern on the floor? those tiling squares? That’s what we are going to be doing today! Feel free to skip this part of the tutorial if you are somewhat used to shaders already. Disclaimer: This is NOT a tutorial on glsl or how to write shaders I am still assuming some prior knowledge with shaders Getting used to the environment On shadertoy we have a basic function called mainImage in which we need to output fragColor. Lets take a look at all the possible inputs we have: We can actually get some UVs for our texture just by using: void mainImage( out vec4 fragColor, in vec2 fragCoord ) { vec2 uv = fragCoord / iResolution.xy; fragColor = vec4(uv, 0.0, 1.0); } Lets start with a basic template: vec3 black = vec3(0.0, 0.0, 0.0); vec3 pink = vec3(1.0, 0.0, 1.0); // 100% red, 0% green, 100% blue vec3 getColor( vec2 uv ) { // We will be adding some code here soon return black; } void mainImage( out vec4 fragColor, in vec2 fragCoord ) { vec2 uv = fragCoord / iResolution.xy; vec3 color = getColor(uv); fragColor = vec4(color, 1.0); } Painting the outlines Now lets try to render a square outline on the edges of the image. The easiest thing to do is just using some conditional to paint these regions in pink. vec3 getColor ( vec2 uv ) { if ((uv.x &gt; 0.95 || uv.x &lt; 0.05) || (uv.y &gt; 0.95 || uv.y &lt; 0.05)) { return pink; } else { return black; } } But that is not how we usually code in shaders. We can start introducing a couple changes. First of all, having to define 0.95 and 0.05 as the boundaries for each side is not ideal. vec3 getColor ( vec2 uv ) { vec2 distanceFromCenter = abs((uv - 0.5) * 2.0); float maxDistance = max(distanceFromCenter.x, distanceFromCenter.y); if (maxDistance &gt; 0.9) { return pink; } else { return black; } } The ouput is exactly the same as before. Take a look at this. uv - 0.5 is shifting the whole uv so that instead of going from [0, 1] it goes from [-0.5, 0.5] on the screen. Then we multiply by 2 so that they go from [-1, 1]. Later on by getting the absolute value each uv goes from 1 on one side to 0 on the center and 1 on the other side. This is what the shifted uv looks like: Next refactor: lets change that if statement. You might have heard branching is BAD like really bad for performance on shaders. Explaining the “why” and “when” of those performance implications is a completely different story maybe for another entire blog series. In a quick way, this used to be a much bigger problem on gpus a lot of years ago. In any case, our particular if statement is most probably NOT even branching!! The compiler is probably just going to translate our conditional assignment as a cmov instruction. In fact, if we were to use the ternary operator ? it would be guaranteed that it would be a conditional assignment. Then, you may ask… why should we change it?? First of all we could make it shorter and more idiomatic by using step but the actual reason to change it is because we could use smoothstep and get antialiasing basically for free: vec3 getColor ( vec2 uv ) { float borderSize = 0.1; float aa = 0.05; vec2 distanceFromCenter = abs((uv - 0.5) * 2.0); float maxDistance = max(distanceFromCenter.x, distanceFromCenter.y); float border = 1.0 - borderSize; return mix(black, pink, smoothstep(border - aa, border + aa, maxDistance)); } This is exagerated so that you can actually see the smooth transition from pink to black. I may not make much sense right now but it will be important later on. Repeating the pattern Now lets try repeating our pattern multiple times. Since we already have one outline painted we can just take advantage of math to repeat our uvs multiple times before sending them to the getColor function. Lets add a new function called repeatUV. vec2 repeatUV ( vec2 uv, vec2 times ) { return fract(uv * times); } void mainImage( out vec4 fragColor, in vec2 fragCoord ) { vec2 uv = fragCoord / iResolution.xy; vec2 repetitions = vec2(5.0); vec2 imageUV = repeatUV(uv, repetitions); vec3 color = getColor(imageUV); fragColor = vec4(color, 1.0); } Lets visualize what repeatUV this is doing to our initial uvs: And magic, we get this image back: Making the cells actually squared Currently cells are not squared just because each uv component scales at a different rate because of the screen aspect ratio. When we map the texture to the actual geometry we won have this problem but if you want to fix it here you can just multiply the x component by the aspect ratio: uv.x *= iResolution.x / iResolution.y; So the whole shader ends up looking like this: vec3 black = vec3(0.0, 0.0, 0.0); vec3 pink = vec3(1.0, 0.0, 1.0); vec2 repeatUV ( vec2 uv, vec2 times ) { return fract(uv * times); } vec3 getColor ( vec2 uv ) { float borderSize = 0.1; float aa = 0.01; vec2 distanceFromCenter = abs((uv - 0.5) * 2.0); float maxDistance = max(distanceFromCenter.x, distanceFromCenter.y); float border = 1.0 - borderSize; return mix(black, pink, smoothstep(border - aa, border + aa, maxDistance)); } void mainImage( out vec4 fragColor, in vec2 fragCoord ) { vec2 uv = fragCoord / iResolution.xy; uv.x *= iResolution.x / iResolution.y; vec2 repetitions = vec2(5.0); vec2 imageUV = repeatUV(uv, repetitions); vec3 color = getColor(imageUV); fragColor = vec4(color, 1.0); } And this is the output:" />
+<meta property="og:description" content="We will start by getting out feet wet by using shadertoy. In this site you can code a pixel/fragment shader that is used to calculate the color of each pixel. We are going to start with something simple: drawing a 2D image. Do you remember our goal? Take a look at the ground. Do you see the pattern on the floor? those tiling squares? That’s what we are going to be doing today! Feel free to skip this part of the tutorial if you are somewhat used to shaders already. Disclaimer: This is NOT a tutorial on glsl or how to write shaders I am still assuming some prior knowledge with shaders Getting used to the environment On shadertoy we have a basic function called mainImage in which we need to output fragColor. Lets take a look at all the possible inputs we have: We can actually get some UVs for our texture just by using: void mainImage( out vec4 fragColor, in vec2 fragCoord ) { vec2 uv = fragCoord / iResolution.xy; fragColor = vec4(uv, 0.0, 1.0); } Lets start with a basic template: vec3 black = vec3(0.0, 0.0, 0.0); vec3 pink = vec3(1.0, 0.0, 1.0); // 100% red, 0% green, 100% blue vec3 getColor( vec2 uv ) { // We will be adding some code here soon return black; } void mainImage( out vec4 fragColor, in vec2 fragCoord ) { vec2 uv = fragCoord / iResolution.xy; vec3 color = getColor(uv); fragColor = vec4(color, 1.0); } Painting the outlines Now lets try to render a square outline on the edges of the image. The easiest thing to do is just using some conditional to paint these regions in pink. vec3 getColor ( vec2 uv ) { if ((uv.x &gt; 0.95 || uv.x &lt; 0.05) || (uv.y &gt; 0.95 || uv.y &lt; 0.05)) { return pink; } else { return black; } } But that is not how we usually code in shaders. We can start introducing a couple changes. First of all, having to define 0.95 and 0.05 as the boundaries for each side is not ideal. vec3 getColor ( vec2 uv ) { vec2 distanceFromCenter = abs((uv - 0.5) * 2.0); float maxDistance = max(distanceFromCenter.x, distanceFromCenter.y); if (maxDistance &gt; 0.9) { return pink; } else { return black; } } The ouput is exactly the same as before. Take a look at this. uv - 0.5 is shifting the whole uv so that instead of going from [0, 1] it goes from [-0.5, 0.5] on the screen. Then we multiply by 2 so that they go from [-1, 1]. Later on by getting the absolute value each uv goes from 1 on one side to 0 on the center and 1 on the other side. This is what the shifted uv looks like: Next refactor: lets change that if statement. You might have heard branching is BAD like really bad for performance on shaders. Explaining the “why” and “when” of those performance implications is a completely different story maybe for another entire blog series. In a quick way, this used to be a much bigger problem on gpus a lot of years ago. In any case, our particular if statement is most probably NOT even branching!! The compiler is probably just going to translate our conditional assignment as a cmov instruction. In fact, if we were to use the ternary operator ? it would be guaranteed that it would be a conditional assignment. Then, you may ask… why should we change it?? First of all we could make it shorter and more idiomatic by using step but the actual reason to change it is because we could use smoothstep and get antialiasing basically for free: vec3 getColor ( vec2 uv ) { float borderSize = 0.1; float aa = 0.05; vec2 distanceFromCenter = abs((uv - 0.5) * 2.0); float maxDistance = max(distanceFromCenter.x, distanceFromCenter.y); float border = 1.0 - borderSize; return mix(black, pink, smoothstep(border - aa, border + aa, maxDistance)); } This is exagerated so that you can actually see the smooth transition from pink to black. I may not make much sense right now but it will be important later on. Repeating the pattern Now lets try repeating our pattern multiple times. Since we already have one outline painted we can just take advantage of math to repeat our uvs multiple times before sending them to the getColor function. Lets add a new function called repeatUV. vec2 repeatUV ( vec2 uv, vec2 times ) { return fract(uv * times); } void mainImage( out vec4 fragColor, in vec2 fragCoord ) { vec2 uv = fragCoord / iResolution.xy; vec2 repetitions = vec2(5.0); vec2 imageUV = repeatUV(uv, repetitions); vec3 color = getColor(imageUV); fragColor = vec4(color, 1.0); } Lets visualize what repeatUV this is doing to our initial uvs: And magic, we get this image back: Making the cells actually squared Currently cells are not squared just because each uv component scales at a different rate because of the screen aspect ratio. When we map the texture to the actual geometry we won have this problem but if you want to fix it here you can just multiply the x component by the aspect ratio: uv.x *= iResolution.x / iResolution.y; So the whole shader ends up looking like this: vec3 black = vec3(0.0, 0.0, 0.0); vec3 pink = vec3(1.0, 0.0, 1.0); vec2 repeatUV ( vec2 uv, vec2 times ) { return fract(uv * times); } vec3 getColor ( vec2 uv ) { float borderSize = 0.1; float aa = 0.01; vec2 distanceFromCenter = abs((uv - 0.5) * 2.0); float maxDistance = max(distanceFromCenter.x, distanceFromCenter.y); float border = 1.0 - borderSize; return mix(black, pink, smoothstep(border - aa, border + aa, maxDistance)); } void mainImage( out vec4 fragColor, in vec2 fragCoord ) { vec2 uv = fragCoord / iResolution.xy; uv.x *= iResolution.x / iResolution.y; vec2 repetitions = vec2(5.0); vec2 imageUV = repeatUV(uv, repetitions); vec3 color = getColor(imageUV); fragColor = vec4(color, 1.0); } And this is the output:" />
+<link rel="canonical" href="https://noxwings.com/blog/posts/2021/09/24/step00-intro.html" />
+<meta property="og:url" content="https://noxwings.com/blog/posts/2021/09/24/step00-intro.html" />
+<meta property="og:site_name" content="NoxWings" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-09-24T12:00:00+02:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Raymarching tutorial 0: Intro to shadertoy" />
+<script type="application/ld+json">
+{"author":{"@type":"Person","name":"David (NoxWings) García Miguel"},"description":"We will start by getting out feet wet by using shadertoy. In this site you can code a pixel/fragment shader that is used to calculate the color of each pixel. We are going to start with something simple: drawing a 2D image. Do you remember our goal? Take a look at the ground. Do you see the pattern on the floor? those tiling squares? That’s what we are going to be doing today! Feel free to skip this part of the tutorial if you are somewhat used to shaders already. Disclaimer: This is NOT a tutorial on glsl or how to write shaders I am still assuming some prior knowledge with shaders Getting used to the environment On shadertoy we have a basic function called mainImage in which we need to output fragColor. Lets take a look at all the possible inputs we have: We can actually get some UVs for our texture just by using: void mainImage( out vec4 fragColor, in vec2 fragCoord ) { vec2 uv = fragCoord / iResolution.xy; fragColor = vec4(uv, 0.0, 1.0); } Lets start with a basic template: vec3 black = vec3(0.0, 0.0, 0.0); vec3 pink = vec3(1.0, 0.0, 1.0); // 100% red, 0% green, 100% blue vec3 getColor( vec2 uv ) { // We will be adding some code here soon return black; } void mainImage( out vec4 fragColor, in vec2 fragCoord ) { vec2 uv = fragCoord / iResolution.xy; vec3 color = getColor(uv); fragColor = vec4(color, 1.0); } Painting the outlines Now lets try to render a square outline on the edges of the image. The easiest thing to do is just using some conditional to paint these regions in pink. vec3 getColor ( vec2 uv ) { if ((uv.x &gt; 0.95 || uv.x &lt; 0.05) || (uv.y &gt; 0.95 || uv.y &lt; 0.05)) { return pink; } else { return black; } } But that is not how we usually code in shaders. We can start introducing a couple changes. First of all, having to define 0.95 and 0.05 as the boundaries for each side is not ideal. vec3 getColor ( vec2 uv ) { vec2 distanceFromCenter = abs((uv - 0.5) * 2.0); float maxDistance = max(distanceFromCenter.x, distanceFromCenter.y); if (maxDistance &gt; 0.9) { return pink; } else { return black; } } The ouput is exactly the same as before. Take a look at this. uv - 0.5 is shifting the whole uv so that instead of going from [0, 1] it goes from [-0.5, 0.5] on the screen. Then we multiply by 2 so that they go from [-1, 1]. Later on by getting the absolute value each uv goes from 1 on one side to 0 on the center and 1 on the other side. This is what the shifted uv looks like: Next refactor: lets change that if statement. You might have heard branching is BAD like really bad for performance on shaders. Explaining the “why” and “when” of those performance implications is a completely different story maybe for another entire blog series. In a quick way, this used to be a much bigger problem on gpus a lot of years ago. In any case, our particular if statement is most probably NOT even branching!! The compiler is probably just going to translate our conditional assignment as a cmov instruction. In fact, if we were to use the ternary operator ? it would be guaranteed that it would be a conditional assignment. Then, you may ask… why should we change it?? First of all we could make it shorter and more idiomatic by using step but the actual reason to change it is because we could use smoothstep and get antialiasing basically for free: vec3 getColor ( vec2 uv ) { float borderSize = 0.1; float aa = 0.05; vec2 distanceFromCenter = abs((uv - 0.5) * 2.0); float maxDistance = max(distanceFromCenter.x, distanceFromCenter.y); float border = 1.0 - borderSize; return mix(black, pink, smoothstep(border - aa, border + aa, maxDistance)); } This is exagerated so that you can actually see the smooth transition from pink to black. I may not make much sense right now but it will be important later on. Repeating the pattern Now lets try repeating our pattern multiple times. Since we already have one outline painted we can just take advantage of math to repeat our uvs multiple times before sending them to the getColor function. Lets add a new function called repeatUV. vec2 repeatUV ( vec2 uv, vec2 times ) { return fract(uv * times); } void mainImage( out vec4 fragColor, in vec2 fragCoord ) { vec2 uv = fragCoord / iResolution.xy; vec2 repetitions = vec2(5.0); vec2 imageUV = repeatUV(uv, repetitions); vec3 color = getColor(imageUV); fragColor = vec4(color, 1.0); } Lets visualize what repeatUV this is doing to our initial uvs: And magic, we get this image back: Making the cells actually squared Currently cells are not squared just because each uv component scales at a different rate because of the screen aspect ratio. When we map the texture to the actual geometry we won have this problem but if you want to fix it here you can just multiply the x component by the aspect ratio: uv.x *= iResolution.x / iResolution.y; So the whole shader ends up looking like this: vec3 black = vec3(0.0, 0.0, 0.0); vec3 pink = vec3(1.0, 0.0, 1.0); vec2 repeatUV ( vec2 uv, vec2 times ) { return fract(uv * times); } vec3 getColor ( vec2 uv ) { float borderSize = 0.1; float aa = 0.01; vec2 distanceFromCenter = abs((uv - 0.5) * 2.0); float maxDistance = max(distanceFromCenter.x, distanceFromCenter.y); float border = 1.0 - borderSize; return mix(black, pink, smoothstep(border - aa, border + aa, maxDistance)); } void mainImage( out vec4 fragColor, in vec2 fragCoord ) { vec2 uv = fragCoord / iResolution.xy; uv.x *= iResolution.x / iResolution.y; vec2 repetitions = vec2(5.0); vec2 imageUV = repeatUV(uv, repetitions); vec3 color = getColor(imageUV); fragColor = vec4(color, 1.0); } And this is the output:","headline":"Raymarching tutorial 0: Intro to shadertoy","dateModified":"2021-09-24T12:00:00+02:00","datePublished":"2021-09-24T12:00:00+02:00","@type":"BlogPosting","url":"https://noxwings.com/blog/posts/2021/09/24/step00-intro.html","mainEntityOfPage":{"@type":"WebPage","@id":"https://noxwings.com/blog/posts/2021/09/24/step00-intro.html"},"@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://noxwings.com/feed.xml" title="NoxWings" /><!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-14P25YPGCS"></script>
+<script>
+  //window['ga-disable-G-14P25YPGCS'] = window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1";
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-14P25YPGCS', { 'debug_mode': true });
+</script>
+
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper">
+    <a class="site-title" rel="author" href="/">NoxWings</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/projects/">
+              <span class="">
+                Projects
+              </span>
+            </a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Raymarching tutorial 0: Intro to shadertoy</h1>
+    <p class="post-meta"><time class="dt-published" datetime="2021-09-24T12:00:00+02:00" itemprop="datePublished">
+        Sep 24, 2021
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>We will start by getting out feet wet by using <a href="www.shadertoy.com">shadertoy</a>. In this site you can code a pixel/fragment shader that is used to calculate the color of each pixel.
+We are going to start with something simple: drawing a 2D image. Do you remember our goal?</p>
+
+<p><img class="center" width="600px" src="/assets/images/raymarching-tutorial/step0/goal.png" /></p>
+
+<p>Take a look at the ground. Do you see the pattern on the floor? those tiling squares? That’s what we are going to be doing today!
+Feel free to skip this part of the tutorial if you are somewhat used to shaders already.</p>
+
+<p><i class="fas fa-warning"></i> Disclaimer:</p>
+<ul>
+  <li>This is NOT a tutorial on glsl or how to write shaders</li>
+  <li>I am still assuming some prior knowledge with shaders</li>
+</ul>
+
+<hr />
+
+<h2 id="getting-used-to-the-environment">Getting used to the environment</h2>
+
+<p>On shadertoy we have a basic function called <code class="language-plaintext highlighter-rouge">mainImage</code> in which we need to output <code class="language-plaintext highlighter-rouge">fragColor</code>. Lets take a look at all the possible inputs we have:</p>
+
+<p><img class="center" src="/assets/images/raymarching-tutorial/step0/shader-inputs.png" /></p>
+
+<p>We can actually get some UVs for our texture just by using:</p>
+
+<div class="language-glsl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">mainImage</span><span class="p">(</span> <span class="k">out</span> <span class="kt">vec4</span> <span class="n">fragColor</span><span class="p">,</span> <span class="k">in</span> <span class="kt">vec2</span> <span class="n">fragCoord</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="kt">vec2</span> <span class="n">uv</span> <span class="o">=</span> <span class="n">fragCoord</span> <span class="o">/</span> <span class="n">iResolution</span><span class="p">.</span><span class="n">xy</span><span class="p">;</span>
+    <span class="n">fragColor</span> <span class="o">=</span> <span class="kt">vec4</span><span class="p">(</span><span class="n">uv</span><span class="p">,</span> <span class="mi">0</span><span class="p">.</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><img class="center" width="600px" src="/assets/images/raymarching-tutorial/step0/uvs.png" /></p>
+
+<p>Lets start with a basic template:</p>
+
+<div class="language-glsl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">vec3</span> <span class="n">black</span> <span class="o">=</span> <span class="kt">vec3</span><span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">.</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">.</span><span class="mi">0</span><span class="p">);</span>
+<span class="kt">vec3</span> <span class="n">pink</span> <span class="o">=</span> <span class="kt">vec3</span><span class="p">(</span><span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">.</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="p">);</span> <span class="c1">// 100% red, 0% green, 100% blue</span>
+
+<span class="kt">vec3</span> <span class="nf">getColor</span><span class="p">(</span> <span class="kt">vec2</span> <span class="n">uv</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// We will be adding some code here soon</span>
+    <span class="k">return</span> <span class="n">black</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">mainImage</span><span class="p">(</span> <span class="k">out</span> <span class="kt">vec4</span> <span class="n">fragColor</span><span class="p">,</span> <span class="k">in</span> <span class="kt">vec2</span> <span class="n">fragCoord</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="kt">vec2</span> <span class="n">uv</span> <span class="o">=</span> <span class="n">fragCoord</span> <span class="o">/</span> <span class="n">iResolution</span><span class="p">.</span><span class="n">xy</span><span class="p">;</span>
+    <span class="kt">vec3</span> <span class="n">color</span> <span class="o">=</span> <span class="n">getColor</span><span class="p">(</span><span class="n">uv</span><span class="p">);</span>
+    <span class="n">fragColor</span> <span class="o">=</span> <span class="kt">vec4</span><span class="p">(</span><span class="n">color</span><span class="p">,</span> <span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<hr />
+
+<h1 id="painting-the-outlines">Painting the outlines</h1>
+
+<p>Now lets try to render a square outline on the edges of the image. The easiest thing to do is just using some conditional to paint these regions in pink.</p>
+
+<div class="language-glsl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">vec3</span> <span class="nf">getColor</span> <span class="p">(</span> <span class="kt">vec2</span> <span class="n">uv</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">uv</span><span class="p">.</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">.</span><span class="mi">95</span> <span class="o">||</span> <span class="n">uv</span><span class="p">.</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">.</span><span class="mo">05</span><span class="p">)</span> <span class="o">||</span>
+        <span class="p">(</span><span class="n">uv</span><span class="p">.</span><span class="n">y</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">.</span><span class="mi">95</span> <span class="o">||</span> <span class="n">uv</span><span class="p">.</span><span class="n">y</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">.</span><span class="mo">05</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">pink</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">black</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><img class="center" width="600px" src="/assets/images/raymarching-tutorial/step0/edges.png" /></p>
+
+<p>But that is not how we usually code in shaders. We can start introducing a couple changes.
+First of all, having to define <code class="language-plaintext highlighter-rouge">0.95</code> and <code class="language-plaintext highlighter-rouge">0.05</code> as the boundaries for each side is not ideal.</p>
+
+<div class="language-glsl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">vec3</span> <span class="nf">getColor</span> <span class="p">(</span> <span class="kt">vec2</span> <span class="n">uv</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="kt">vec2</span> <span class="n">distanceFromCenter</span> <span class="o">=</span> <span class="n">abs</span><span class="p">((</span><span class="n">uv</span> <span class="o">-</span> <span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span><span class="p">.</span><span class="mi">0</span><span class="p">);</span>
+    <span class="kt">float</span> <span class="n">maxDistance</span> <span class="o">=</span> <span class="n">max</span><span class="p">(</span><span class="n">distanceFromCenter</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="n">distanceFromCenter</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">maxDistance</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">.</span><span class="mi">9</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">pink</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">black</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>The ouput is exactly the same as before. Take a look at this.</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">uv - 0.5</code> is shifting the whole uv so that instead of going from <code class="language-plaintext highlighter-rouge">[0, 1]</code> it goes from <code class="language-plaintext highlighter-rouge">[-0.5, 0.5]</code> on the screen.</li>
+  <li>Then we multiply by 2 so that they go from <code class="language-plaintext highlighter-rouge">[-1, 1]</code>.</li>
+  <li>Later on by getting the absolute value each uv goes from <code class="language-plaintext highlighter-rouge">1</code> on one side to <code class="language-plaintext highlighter-rouge">0</code> on the center and <code class="language-plaintext highlighter-rouge">1</code> on the other side.</li>
+</ul>
+
+<p>This is what the shifted uv looks like:</p>
+
+<p><img class="center" width="600px" src="/assets/images/raymarching-tutorial/step0/shifted_uv.png" /></p>
+
+<p>Next refactor: lets change that <code class="language-plaintext highlighter-rouge">if</code> statement. You might have heard branching is <strong>BAD</strong> like really bad for performance on shaders. Explaining the “why” and “when” of those performance implications is a completely different story maybe for another entire blog series. In a quick way, this used to be a much bigger problem on gpus a lot of years ago. In any case, our particular <code class="language-plaintext highlighter-rouge">if</code> statement is most probably NOT even branching!! The compiler is probably just going to translate our conditional assignment as a <code class="language-plaintext highlighter-rouge">cmov</code> instruction. In fact, if we were to use the ternary operator <code class="language-plaintext highlighter-rouge">?</code> it would be guaranteed that it would be a conditional assignment. Then, you may ask… why should we change it?? First of all we could make it shorter and more idiomatic by using <code class="language-plaintext highlighter-rouge">step</code> but the actual reason to change it is because we could use <code class="language-plaintext highlighter-rouge">smoothstep</code> and get antialiasing basically for free:</p>
+
+<div class="language-glsl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">vec3</span> <span class="nf">getColor</span> <span class="p">(</span> <span class="kt">vec2</span> <span class="n">uv</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="kt">float</span> <span class="n">borderSize</span> <span class="o">=</span> <span class="mi">0</span><span class="p">.</span><span class="mi">1</span><span class="p">;</span>
+    <span class="kt">float</span> <span class="n">aa</span> <span class="o">=</span> <span class="mi">0</span><span class="p">.</span><span class="mo">05</span><span class="p">;</span>
+
+    <span class="kt">vec2</span> <span class="n">distanceFromCenter</span> <span class="o">=</span> <span class="n">abs</span><span class="p">((</span><span class="n">uv</span> <span class="o">-</span> <span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span><span class="p">.</span><span class="mi">0</span><span class="p">);</span>
+    <span class="kt">float</span> <span class="n">maxDistance</span> <span class="o">=</span> <span class="n">max</span><span class="p">(</span><span class="n">distanceFromCenter</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="n">distanceFromCenter</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+
+    <span class="kt">float</span> <span class="n">border</span> <span class="o">=</span> <span class="mi">1</span><span class="p">.</span><span class="mi">0</span> <span class="o">-</span> <span class="n">borderSize</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">mix</span><span class="p">(</span><span class="n">black</span><span class="p">,</span> <span class="n">pink</span><span class="p">,</span> <span class="n">smoothstep</span><span class="p">(</span><span class="n">border</span> <span class="o">-</span> <span class="n">aa</span><span class="p">,</span> <span class="n">border</span> <span class="o">+</span> <span class="n">aa</span><span class="p">,</span> <span class="n">maxDistance</span><span class="p">));</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><img class="center" width="600px" src="/assets/images/raymarching-tutorial/step0/smooth_edges.png" /></p>
+
+<p>This is exagerated so that you can actually see the smooth transition from pink to black. I may not make much sense right now but it will be important later on.</p>
+
+<hr />
+
+<h1 id="repeating-the-pattern">Repeating the pattern</h1>
+
+<p>Now lets try repeating our pattern multiple times. Since we already have one outline painted we can just take advantage of math to repeat our uvs multiple times before sending them to the <code class="language-plaintext highlighter-rouge">getColor</code> function. Lets add a new function called <code class="language-plaintext highlighter-rouge">repeatUV</code>.</p>
+
+<div class="language-glsl highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="kt">vec2</span> <span class="nf">repeatUV</span> <span class="p">(</span> <span class="kt">vec2</span> <span class="n">uv</span><span class="p">,</span> <span class="kt">vec2</span> <span class="n">times</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">fract</span><span class="p">(</span><span class="n">uv</span> <span class="o">*</span> <span class="n">times</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">mainImage</span><span class="p">(</span> <span class="k">out</span> <span class="kt">vec4</span> <span class="n">fragColor</span><span class="p">,</span> <span class="k">in</span> <span class="kt">vec2</span> <span class="n">fragCoord</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="kt">vec2</span> <span class="n">uv</span> <span class="o">=</span> <span class="n">fragCoord</span> <span class="o">/</span> <span class="n">iResolution</span><span class="p">.</span><span class="n">xy</span><span class="p">;</span>
+
+    <span class="kt">vec2</span> <span class="n">repetitions</span> <span class="o">=</span> <span class="kt">vec2</span><span class="p">(</span><span class="mi">5</span><span class="p">.</span><span class="mi">0</span><span class="p">);</span>
+    <span class="kt">vec2</span> <span class="n">imageUV</span> <span class="o">=</span> <span class="n">repeatUV</span><span class="p">(</span><span class="n">uv</span><span class="p">,</span> <span class="n">repetitions</span><span class="p">);</span>
+    <span class="kt">vec3</span> <span class="n">color</span> <span class="o">=</span> <span class="n">getColor</span><span class="p">(</span><span class="n">imageUV</span><span class="p">);</span>
+
+    <span class="n">fragColor</span> <span class="o">=</span> <span class="kt">vec4</span><span class="p">(</span><span class="n">color</span><span class="p">,</span> <span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p>Lets visualize what <code class="language-plaintext highlighter-rouge">repeatUV</code> this is doing to our initial uvs:
+<img class="center" width="600px" src="/assets/images/raymarching-tutorial/step0/repeated_uv.png" /></p>
+
+<p>And magic, we get this image back:
+<img class="center" width="600px" src="/assets/images/raymarching-tutorial/step0/grid.png" /></p>
+
+<hr />
+
+<h1 id="making-the-cells-actually-squared">Making the cells actually squared</h1>
+
+<p>Currently cells are not squared just because each uv component scales at a different rate because of the screen aspect ratio.
+When we map the texture to the actual geometry we won have this problem but if you want to fix it here you can just multiply the x component by the aspect ratio:</p>
+
+<div class="language-glsl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">uv</span><span class="p">.</span><span class="n">x</span> <span class="o">*=</span> <span class="n">iResolution</span><span class="p">.</span><span class="n">x</span> <span class="o">/</span> <span class="n">iResolution</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>So the whole shader ends up looking like this:</p>
+
+<div class="language-glsl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">vec3</span> <span class="n">black</span> <span class="o">=</span> <span class="kt">vec3</span><span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">.</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">.</span><span class="mi">0</span><span class="p">);</span>
+<span class="kt">vec3</span> <span class="n">pink</span> <span class="o">=</span> <span class="kt">vec3</span><span class="p">(</span><span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">.</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="p">);</span>
+
+<span class="kt">vec2</span> <span class="nf">repeatUV</span> <span class="p">(</span> <span class="kt">vec2</span> <span class="n">uv</span><span class="p">,</span> <span class="kt">vec2</span> <span class="n">times</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">fract</span><span class="p">(</span><span class="n">uv</span> <span class="o">*</span> <span class="n">times</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">vec3</span> <span class="nf">getColor</span> <span class="p">(</span> <span class="kt">vec2</span> <span class="n">uv</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="kt">float</span> <span class="n">borderSize</span> <span class="o">=</span> <span class="mi">0</span><span class="p">.</span><span class="mi">1</span><span class="p">;</span>
+    <span class="kt">float</span> <span class="n">aa</span> <span class="o">=</span> <span class="mi">0</span><span class="p">.</span><span class="mo">01</span><span class="p">;</span>
+
+    <span class="kt">vec2</span> <span class="n">distanceFromCenter</span> <span class="o">=</span> <span class="n">abs</span><span class="p">((</span><span class="n">uv</span> <span class="o">-</span> <span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span><span class="p">.</span><span class="mi">0</span><span class="p">);</span>
+    <span class="kt">float</span> <span class="n">maxDistance</span> <span class="o">=</span> <span class="n">max</span><span class="p">(</span><span class="n">distanceFromCenter</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="n">distanceFromCenter</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+
+    <span class="kt">float</span> <span class="n">border</span> <span class="o">=</span> <span class="mi">1</span><span class="p">.</span><span class="mi">0</span> <span class="o">-</span> <span class="n">borderSize</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">mix</span><span class="p">(</span><span class="n">black</span><span class="p">,</span> <span class="n">pink</span><span class="p">,</span> <span class="n">smoothstep</span><span class="p">(</span><span class="n">border</span> <span class="o">-</span> <span class="n">aa</span><span class="p">,</span> <span class="n">border</span> <span class="o">+</span> <span class="n">aa</span><span class="p">,</span> <span class="n">maxDistance</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">mainImage</span><span class="p">(</span> <span class="k">out</span> <span class="kt">vec4</span> <span class="n">fragColor</span><span class="p">,</span> <span class="k">in</span> <span class="kt">vec2</span> <span class="n">fragCoord</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="kt">vec2</span> <span class="n">uv</span> <span class="o">=</span> <span class="n">fragCoord</span> <span class="o">/</span> <span class="n">iResolution</span><span class="p">.</span><span class="n">xy</span><span class="p">;</span>
+    <span class="n">uv</span><span class="p">.</span><span class="n">x</span> <span class="o">*=</span> <span class="n">iResolution</span><span class="p">.</span><span class="n">x</span> <span class="o">/</span> <span class="n">iResolution</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+
+    <span class="kt">vec2</span> <span class="n">repetitions</span> <span class="o">=</span> <span class="kt">vec2</span><span class="p">(</span><span class="mi">5</span><span class="p">.</span><span class="mi">0</span><span class="p">);</span>
+    <span class="kt">vec2</span> <span class="n">imageUV</span> <span class="o">=</span> <span class="n">repeatUV</span><span class="p">(</span><span class="n">uv</span><span class="p">,</span> <span class="n">repetitions</span><span class="p">);</span>
+    <span class="kt">vec3</span> <span class="n">color</span> <span class="o">=</span> <span class="n">getColor</span><span class="p">(</span><span class="n">imageUV</span><span class="p">);</span>
+
+    <span class="n">fragColor</span> <span class="o">=</span> <span class="kt">vec4</span><span class="p">(</span><span class="n">color</span><span class="p">,</span> <span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>And this is the output:</p>
+
+<p><img class="center" width="600px" src="/assets/images/raymarching-tutorial/step0/grid_squares.png" /></p>
+
+  </div>
+
+  <hr class="thin" />
+  <p>
+    <a href="/blog">← Back to posts</a>
+  </p><div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = 'https://noxwings.com/blog/posts/2021/09/24/step00-intro.html';
+      this.page.identifier = 'https://noxwings.com/blog/posts/2021/09/24/step00-intro.html';
+    };
+
+    (function() {
+      var d = document, s = d.createElement('script');
+
+      s.src = 'https://noxwings.disqus.com/embed.js';
+
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript><a class="u-url" href="/blog/posts/2021/09/24/step00-intro.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://twitter.com/noxwings" title="noxwings"><svg viewBox="0 0 16 16" class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#twitter"></use></svg></a></li><li><a rel="me" href="https://www.linkedin.com/in/davidgarciamiguel" title="davidgarciamiguel"><svg viewBox="0 0 16 16" class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#linkedin"></use></svg></a></li><li><a rel="me" href="https://github.com/noxwings" title="noxwings"><svg viewBox="0 0 16 16" class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+      </div>
+    </div>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <!-- <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p> -->
+            <ul class="contact-list">
+            <li class="p-name">© David (NoxWings) García Miguel</li>
+            <li><a class="u-email" href="mailto:noxwings@gmail.com">noxwings@gmail.com</a></li>
+            </ul>
+      </div>
+    </div>
+<!--
+     <div class="footer-col">
+       <p>Love rendering vfx and technical art topics</p>
+     </div> -->
+
+  </div>
+
+</footer>
+</body>
+
+</html>
